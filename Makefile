@@ -1,0 +1,2 @@
+run:
+	./Akishell/shell

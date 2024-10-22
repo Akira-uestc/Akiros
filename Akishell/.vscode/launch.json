@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug main",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/shell",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Build executable",
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "name": "run main",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/shell",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Build executable",
+            "internalConsoleOptions": "neverOpen"
+        }
+    ]
+}
