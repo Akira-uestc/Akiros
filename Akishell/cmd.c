@@ -59,7 +59,7 @@ Command *parse_cmd(char *cmd_buffer)
         token = strtok(NULL, "|");
     }
 
-  return head;
+    return head;
 }
 
 void free_buffer(char *cmd_buffer, Command *current_cmd) 
