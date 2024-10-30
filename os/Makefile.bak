@@ -1,0 +1,25 @@
+pre:
+	cargo build
+	~/.cargo/bin/rust-objcopy --strip-all target/riscv64gc-unknown-none-elf/debug/os -O binary target/riscv64gc-unknown-none-elf/debug/os.bin
+
+run:pre
+	qemu-system-riscv64 \
+    -machine virt \
+    -nographic \
+    -bios ./bootloader/rustsbi-qemu.bin \
+    -device loader,file=target/riscv64gc-unknown-none-elf/debug/os.bin,addr=0x80200000
+
+debug:pre
+	nohup qemu-system-riscv64 \
+    -machine virt \
+    -nographic \
+    -bios ./bootloader/rustsbi-qemu.bin \
+    -device loader,file=target/riscv64gc-unknown-none-elf/debug/os.bin,addr=0x80200000 \
+	-s -S > /dev/null 2>&1 &
+	riscv64-linux-gnu-gdb \
+    -ex 'file target/riscv64gc-unknown-none-elf/debug/os' \
+    -ex 'set arch riscv:rv64' \
+    -ex 'target remote localhost:1234'
+
+clean:
+	cargo clean

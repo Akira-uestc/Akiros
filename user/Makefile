@@ -17,3 +17,5 @@ binary: elf
 
 build: binary
 
+clean:
+	cargo clean
