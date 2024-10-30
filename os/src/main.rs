@@ -3,6 +3,7 @@
 
 #[macro_use]
 mod console;
+pub mod batch;
 mod lang_item;
 mod sbi;
 
@@ -11,12 +12,13 @@ use core::arch::global_asm;
 use sbi::shutdown;
 
 global_asm!(include_str!("entry.asm"));
+global_asm!(include_str!("link_app.S"));
 
 #[no_mangle]
 pub fn rust_main() -> ! {
-	clear_bss();
-	println!("Hello World!");
-	shutdown(false)
+    clear_bss();
+    println!("Hello World!");
+    shutdown(false)
 }
 
 fn clear_bss() {
@@ -24,7 +26,5 @@ fn clear_bss() {
         fn sbss();
         fn ebss();
     }
-    (sbss as usize..ebss as usize).for_each(|a| {
-        unsafe { (a as *mut u8).write_volatile(0) }
-    });
+    (sbss as usize..ebss as usize).for_each(|a| unsafe { (a as *mut u8).write_volatile(0) });
 }
