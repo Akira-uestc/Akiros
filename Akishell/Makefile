@@ -1,7 +1,7 @@
 CC = clang
 CFLAGS = -g
 
-OBJ = main.o cmd.o execute.o inner.o
+OBJ = main.o cmd.o execute.o inner.o file.o
 
 shell: $(OBJ)
 	$(CC) $(OBJ) -o shell

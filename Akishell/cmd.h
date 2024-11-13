@@ -8,9 +8,10 @@
 #define CMD_H
 
 typedef struct Command {
-  char *program;
-  char **args;
-  struct Command *next;
+    char* program;
+    char** args;
+    char* operate;
+    struct Command *next;
 } Command;
 
 char *get_cmd(char *cmd_buffer, int buffer_size);
