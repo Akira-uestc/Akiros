@@ -11,5 +11,6 @@
 
 _Bool if_file(char* file_path);
 char* read_line(char* filepath);
+void execute_from_file(char* filepath);
 
 #endif /* FILE_H */

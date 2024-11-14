@@ -16,14 +16,16 @@ int main(int argc, char* argv[])
         char* file_path = argv[1];
         if(if_file(file_path))
         {
-            char* cmd_buffer = malloc(sizeof(buffer_size));
-            Command* current_cmd = malloc(sizeof(Command));
+//            char* cmd_buffer = malloc(sizeof(buffer_size));
+//            Command* current_cmd = malloc(sizeof(Command));
+//
+//            cmd_buffer = read_line(file_path);
+//            current_cmd = parse_cmd(cmd_buffer);
+//
+//            execute_cmd(current_cmd);
+//            free_buffer(cmd_buffer, current_cmd);
 
-            cmd_buffer = read_line(file_path);
-            current_cmd = parse_cmd(cmd_buffer);
-
-            execute_cmd(current_cmd);
-            free_buffer(cmd_buffer, current_cmd);
+            execute_from_file(file_path);
 
             return 0;
         }
@@ -51,6 +53,5 @@ int main(int argc, char* argv[])
         }
         
     }
-
     return 0;
 }
