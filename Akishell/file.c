@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "cmd.h"
 #include "execute.h"
+#include "inner.h"
 
 _Bool if_file(const char* filepath)
 {
@@ -45,7 +46,10 @@ void execute_from_file(char* filepath)
             file_buffer[file_ptr] = '\0';
 
             Command* line_parsed = parse_cmd(file_buffer);
-            execute_cmd(line_parsed);
+            if(!is_builtin(line_parsed,file_buffer))
+            {
+                execute_cmd(line_parsed);
+            }
 
             file_ptr = 0;
         } 
@@ -69,5 +73,8 @@ void execute_from_file(char* filepath)
         }
     }
     close(fd);
-    free(file_buffer);
+    if (!file_buffer) 
+    {
+        free(file_buffer);
+    }
 }
