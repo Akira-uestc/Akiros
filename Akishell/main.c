@@ -16,29 +16,19 @@ int main(int argc, char* argv[])
         char* file_path = argv[1];
         if(if_file(file_path))
         {
-//            char* cmd_buffer = malloc(sizeof(buffer_size));
-//            Command* current_cmd = malloc(sizeof(Command));
-//
-//            cmd_buffer = read_line(file_path);
-//            current_cmd = parse_cmd(cmd_buffer);
-//
-//            execute_cmd(current_cmd);
-//            free_buffer(cmd_buffer, current_cmd);
-
             execute_from_file(file_path);
-
             return 0;
         }
     }
     printf("welcome to use akira's simple shell!\n");
-    
+
     while (if_loop) 
     {
         char* cmd_buffer = malloc(sizeof(buffer_size));
         Command* current_cmd = malloc(sizeof(Command));
-        
+
         printf("-> ");
-        
+
         cmd_buffer = get_cmd(cmd_buffer,buffer_size);
         current_cmd = parse_cmd(cmd_buffer);
 
@@ -51,7 +41,6 @@ int main(int argc, char* argv[])
             execute_cmd(current_cmd);
             free_buffer(cmd_buffer, current_cmd);
         }
-        
     }
     return 0;
 }

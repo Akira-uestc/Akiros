@@ -45,6 +45,11 @@ void execute_from_file(char* filepath)
         {
             file_buffer[file_ptr] = '\0';
 
+            if(file_ptr == 0)
+            {
+                continue;
+            }
+
             Command* line_parsed = parse_cmd(file_buffer);
             if(!is_builtin(line_parsed,file_buffer))
             {
