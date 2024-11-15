@@ -81,7 +81,6 @@ void builtin_cd(char* cmd_buffer, Command* current_cmd)
     } else {
         printf("failed to change directory\n");
     }
-    free_buffer(cmd_buffer, current_cmd);
 }
 
 void builtin_help(char* cmd_buffer, Command* current_cmd) 

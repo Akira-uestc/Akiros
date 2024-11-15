@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
 
         if(is_builtin(current_cmd,cmd_buffer))
         {
+            free_buffer(cmd_buffer, current_cmd);
             continue;
         }
         else 
