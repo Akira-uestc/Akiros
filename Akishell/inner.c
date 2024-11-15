@@ -54,7 +54,6 @@ bool is_builtin(Command* cmd, char* cmd_buffer)
 
 void builtin_exit(char* cmd_buffer, Command* current_cmd)
 {
-    free_buffer(cmd_buffer, current_cmd);
     if_loop = 0;
     printf("Exiting...\n");
 }
@@ -86,10 +85,13 @@ void builtin_cd(char* cmd_buffer, Command* current_cmd)
 void builtin_help(char* cmd_buffer, Command* current_cmd) 
 {
     printf("Help: Available commands are exit, cd, help, echo\n");
-    free_buffer(cmd_buffer, current_cmd);
 }
 
 void builtin_exec(char* cmd_buffer, Command* current_cmd)
 {
+    if(current_cmd->args[1]!=NULL)
+    {
+        execvp(current_cmd->args[1], &current_cmd->args[1]);
+    }
     return;
 }
