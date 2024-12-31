@@ -14,10 +14,17 @@ char *get_cmd(char *cmd_buffer, int buffer_size)
     if (fgets(cmd_buffer, buffer_size, stdin) != NULL) 
     {
         size_t len = strlen(cmd_buffer);
-        if (len > 0 && cmd_buffer[len - 1] == '\n') {
-        cmd_buffer[len - 1] = '\0';
-    }
-    return cmd_buffer;
+        if (len > 0 && cmd_buffer[len - 1] != '\n') 
+        {
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF);
+            fprintf(stderr, "Warning: Input exceeded buffer size and was truncated.\n");
+        }
+        else if (len > 0 && cmd_buffer[len - 1] == '\n') 
+        {
+            cmd_buffer[len - 1] = '\0';
+        }
+        return cmd_buffer;
     }
     return NULL;
 }
@@ -26,7 +33,7 @@ Command *parse_cmd(char *cmd_buffer)
 {
     Command *head = NULL;
     Command *current = NULL;
-    char *token = strtok(cmd_buffer, "|");
+    char *token = strtok(cmd_buffer, "| ");
 
     while (token != NULL) 
     {
@@ -49,8 +56,8 @@ Command *parse_cmd(char *cmd_buffer)
         if (head == NULL) 
         {
             head = cmd;
-        } 
-        else 
+        }
+        else
         {
             current->next = cmd;
         }
