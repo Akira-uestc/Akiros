@@ -7,6 +7,13 @@
 #ifndef AKIFS_H
 #define AKIFS_H
 
-struct inode {};
+typedef struct BootBlock {
+    const int group_num;
+    const int block_size;
+} BootBlock;
+
+typedef struct BlockGroup {
+    int inode_size;
+} BlockGroup;
 
 #endif /* AKIFS_H */
