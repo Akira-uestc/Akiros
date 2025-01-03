@@ -71,14 +71,14 @@ Command *parse_cmd(char *cmd_buffer)
 }
 
 char* slice_array(const char* array, int start, int length) {
-    char* sub_array = malloc((length + 1) * sizeof(char)); // +1 for null terminator
+    char* sub_array = malloc((length + 1) * sizeof(char));
     if (sub_array == NULL) {
         perror("Memory allocation failed");
         exit(1);
     }
 
     strncpy(sub_array, array + start, length);
-    sub_array[length] = '\0'; // Ensure null termination
+    sub_array[length] = '\0';
 
     return sub_array;
 }
