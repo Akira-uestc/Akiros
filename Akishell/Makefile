@@ -1,7 +1,7 @@
 CC = clang
 CFLAGS = -g
 
-OBJ = main.o cmd.o execute.o inner.o file.o
+OBJ = shell.o cmd.o builtin.o execute.o file.o
 
 shell: $(OBJ)
 	$(CC) $(OBJ) -o shell
@@ -17,4 +17,5 @@ debug:shell
 
 clean:
 	rm -f $(OBJ) shell
+
 

@@ -1,9 +1,3 @@
-/*
- * Filename: inner.c
- * Author: Akira
- * Description: shell built-in command
- */
-
 #include "cmd.h"
 #include <stdlib.h>
 #include <string.h>
@@ -95,3 +89,4 @@ void builtin_exec(char* cmd_buffer, Command* current_cmd)
     }
     return;
 }
+

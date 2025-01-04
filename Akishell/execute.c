@@ -57,5 +57,9 @@ void execute_cmd(Command* cmd_list)
                 cmd_list = cmd_list->next;
             }
         }
+        else {
+            cmd_list = cmd_list->next;
+        }
     }
 }
+

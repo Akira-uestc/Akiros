@@ -1,29 +1,29 @@
 /*
  * Filename: cmd.h
  * Author: Your Name
- * Description:
+ * Description: some struct defination of the command line.
  */
 
 #ifndef CMD_H
 #define CMD_H
 
-enum operate {
+#include <stdio.h>
+
+typedef enum operate {
     PIPE,
-    REDIRECT,
+    O_REDIRECT,
+    I_REDIRECT,
     NONE
-};
+} Operate;
 
 typedef struct Command {
     char* program;
     char** args;
-    enum operate operate;
+    Operate operate;
+    FILE* input_direction;
+    FILE* output_direction;
     struct Command *next;
 } Command;
-
-typedef struct seperate_char {
-    char* cmd;
-    enum operate operate;
-} seperate_char;
 
 char *get_cmd(char *cmd_buffer, int buffer_size);
 Command *parse_cmd(char *cmd_buffer);
