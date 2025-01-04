@@ -14,7 +14,8 @@ pub fn handle_builtin(command: &str, if_loop: &mut bool) -> bool {
                 true
             }
             "exec" => {
-                builtin_exec();
+                let prog = parts.next().unwrap();
+                builtin_exec(prog);
                 true
             }
             "help" => {
@@ -47,8 +48,17 @@ fn builtin_cd(path: &str) {
     }
 }
 
-fn builtin_exec() {
-    println!("Execute command not implemented.");
+fn builtin_exec(prog: &str) {
+    match crate::parse::parse_command(prog) {
+        Ok(parsed_prog) => {
+            if let Err(err) = crate::execute::execute_command(&parsed_prog) {
+                eprintln!("ERROR: Failed to execute command: {}", err);
+            }
+        }
+        Err(err) => {
+            eprintln!("ERROR: Failed to parse command: {}", err);
+        }
+    }
 }
 
 fn builtin_help() {
