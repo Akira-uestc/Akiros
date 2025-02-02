@@ -31,7 +31,7 @@ char *get_cmd(char *cmd_buffer, int buffer_size) {
 char** char_to_cmd(char* input) {
     size_t capacity = 10;
     size_t count = 0;
-    char** buffer = malloc(capacity * sizeof(char*));
+    char** buffer = malloc(capacity * sizeof(char)*capacity);
 
     if (buffer == NULL) {
         perror("malloc failed");
@@ -77,7 +77,6 @@ char** copy_args(char** src) {
         dest[i] = strdup(src[i]);
         if (dest[i] == NULL) {
             perror("strdup failed");
-            // 清理已分配的内存，防止泄漏
             for (size_t j = 0; j < i; j++) {
                 free(dest[j]);
             }
@@ -98,50 +97,56 @@ Command *parse_cmd(char *cmd_buffer)
     size_t char_poiter = 0;
 
     while (char_poiter < strlen(cmd_buffer)) {
-        if(strchr(delimiters, cmd_buffer[char_poiter])) {
+        if (strchr(delimiters, cmd_buffer[char_poiter])) {
             Command *cmd = malloc(sizeof(Command));
-            char* tmp = malloc(sizeof(char)*(char_poiter - start +1));
+            if (cmd == NULL) {
+                perror("malloc failed");
+                exit(EXIT_FAILURE);
+            }
+
+            size_t length = char_poiter - start;
+            char *tmp = malloc(length + 1);
+            if (tmp == NULL) {
+                perror("malloc failed");
+                exit(EXIT_FAILURE);
+            }
+            memcpy(tmp, &cmd_buffer[start], length);
+            tmp[length] = '\0';
+
+            char **cmd_args = char_to_cmd(tmp);
+            cmd->program = strdup(cmd_args[0]);
+            cmd->args = copy_args(cmd_args);
+            free(tmp);
+
             switch (cmd_buffer[char_poiter]) {
-                case '|': {
-                    memcpy(tmp, &cmd_buffer[start], char_poiter-start);
-                    char **cmd_args = char_to_cmd(tmp);
-                    cmd->program = strdup(cmd_args[0]);
-                    cmd->args = copy_args(cmd_args);
-                    free(tmp);
+                case '|':
                     cmd->operate = PIPE;
-                    cmd->next = NULL;
-                } break;
-                case '>': {
-                    memcpy(tmp, &cmd_buffer[start], char_poiter-start);
-                    char **cmd_args = char_to_cmd(tmp);
-                    cmd->program = strdup(cmd_args[0]);
-                    cmd->args = copy_args(cmd_args);
-                    free(tmp);
+                    break;
+                case '>':
                     cmd->operate = O_REDIRECT;
-                    cmd->next = NULL;
-                } break;
-                case '<': {
-                    memcpy(tmp, &cmd_buffer[start], char_poiter-start);
-                    char **cmd_args = char_to_cmd(tmp);
-                    cmd->program = strdup(cmd_args[0]);
-                    cmd->args = copy_args(cmd_args);
-                    free(tmp);
+                    break;
+                case '<':
                     cmd->operate = I_REDIRECT;
-                    cmd->next = NULL;
-                } break;
+                    break;
+                default:
+                    cmd->operate = NONE;
+                    break;
             }
-            if(head == NULL) {
+
+            cmd->next = NULL;
+
+            if (head == NULL) {
                 head = cmd;
-                current = head;
-            }
-            else {
+            } else {
                 current->next = cmd;
             }
             current = cmd;
+
             start = char_poiter + 1;
         }
-        char_poiter++;
+        char_poiter += 1;
     }
+
     if (start < char_poiter) {
         size_t length = char_poiter - start;
         char *tmp = malloc(length + 1);
@@ -150,23 +155,21 @@ Command *parse_cmd(char *cmd_buffer)
             exit(EXIT_FAILURE);
         }
         memcpy(tmp, &cmd_buffer[start], length);
-        tmp[length] = '\0'; // 添加字符串终止符
+        tmp[length] = '\0';
 
-        // 解析命令字符串
         char **cmd_args = char_to_cmd(tmp);
-        free(tmp);
 
-        // 创建新节点
         Command *cmd = malloc(sizeof(Command));
         if (cmd == NULL) {
             perror("malloc failed");
             exit(EXIT_FAILURE);
         }
-        cmd->args = cmd_args;
+        cmd->program = strdup(cmd_args[0]);
+        cmd->args = copy_args(cmd_args);
+        free(tmp);
         cmd->operate = NONE;
         cmd->next = NULL;
 
-        // 链接到链表中
         if (head == NULL) {
             head = cmd;
         } else {
@@ -177,8 +180,27 @@ Command *parse_cmd(char *cmd_buffer)
     return head;
 }
 
-void free_buffer(char *cmd_buffer, Command *current_cmd) 
+void free_command_list(Command *head) 
+{
+    while (head != NULL) {
+        Command *temp = head;
+        head = head->next;
+
+        free(temp->program);
+
+        if (temp->args != NULL) {
+            for (size_t i = 0; temp->args[i] != NULL; i++) {
+                free(temp->args[i]);
+            }
+            free(temp->args);
+        }
+
+        free(temp);
+    }
+}
+
+void free_buffer(char *cmd_buffer, Command *head) 
 {
     free(cmd_buffer);
-    free(current_cmd);
+    free_command_list(head);
 }

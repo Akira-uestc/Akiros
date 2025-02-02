@@ -17,13 +17,12 @@ void execute_from_file(char* filepath);
 
 int main(int argc, char *argv[])
 {
-    if(argc == 2) {
-        char* file_path = argv[1];
-        execute_from_file(file_path);
+    if(argc >= 2) {
+        for (int i = 1; i < argc; i++) {
+            char* file_path = argv[i];
+            execute_from_file(file_path);
+        }
         return 0;
-    } else if (argc > 2) {
-        perror("ERROR: Too many arguments passed.\n");
-        exit(EXIT_FAILURE);
     }
     printf("%s\n",prompt);
 
