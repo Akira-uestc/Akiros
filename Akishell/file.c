@@ -4,8 +4,9 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include "cmd.h"
-#include "execute.h"
-#include "inner.h"
+
+bool is_builtin(Command* cmd, char* cmd_buffer);
+void execute_cmd(Command* cmd_list);
 
 _Bool if_file(const char* filepath)
 {
@@ -38,36 +39,28 @@ void execute_from_file(char* filepath)
     ssize_t file_ptr = 0;
     ssize_t read_bytes;
     char c;
-    
-    while ((read_bytes = read(fd, &c, 1)) > 0) 
-    {
-        if (c == '\n') 
-        {
+    while ((read_bytes = read(fd, &c, 1)) > 0) {
+        if (c == '\n') {
             file_buffer[file_ptr] = '\0';
 
-            if(file_ptr == 0)
-            {
+            if(file_ptr == 0) {
                 continue;
             }
 
             Command* line_parsed = parse_cmd(file_buffer);
-            if(!is_builtin(line_parsed,file_buffer))
-            {
+            if(!is_builtin(line_parsed,file_buffer)) {
                 execute_cmd(line_parsed);
             }
 
             file_ptr = 0;
-        } 
-        else 
-        {
+        }
+        else {
             file_buffer[file_ptr++] = c;
 
-            if (file_ptr >= buffer_size) 
-            {
+            if (file_ptr >= buffer_size) {
                 buffer_size *= 2;
                 char* temp = realloc(file_buffer, buffer_size);
-                if (!temp) 
-                {
+                if (!temp) {
                     perror("Failed to expand buffer");
                     free(file_buffer);
                     close(fd);
@@ -78,8 +71,8 @@ void execute_from_file(char* filepath)
         }
     }
     close(fd);
-    if (!file_buffer) 
-    {
+    if (!file_buffer) {
         free(file_buffer);
     }
 }
+

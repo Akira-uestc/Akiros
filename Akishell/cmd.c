@@ -9,19 +9,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *get_cmd(char *cmd_buffer, int buffer_size) 
-{
-    if (fgets(cmd_buffer, buffer_size, stdin) != NULL) 
-    {
+const char* delimiters = "|><";
+
+//if stdin is not empty, return a char pointer to a string without '\0'
+char *get_cmd(char *cmd_buffer, int buffer_size) {
+    if (fgets(cmd_buffer, buffer_size, stdin) != NULL) {
         size_t len = strlen(cmd_buffer);
-        if (len > 0 && cmd_buffer[len - 1] != '\n') 
-        {
+        if (len > 0 && cmd_buffer[len - 1] != '\n') {
             int c;
             while ((c = getchar()) != '\n' && c != EOF);
             fprintf(stderr, "Warning: Input exceeded buffer size and was truncated.\n");
         }
-        else if (len > 0 && cmd_buffer[len - 1] == '\n') 
-        {
+        else if (len > 0 && cmd_buffer[len - 1] == '\n') {
             cmd_buffer[len - 1] = '\0';
         }
         return cmd_buffer;
@@ -29,113 +28,179 @@ char *get_cmd(char *cmd_buffer, int buffer_size)
     return NULL;
 }
 
-//从只包含一个可执行程序的str中解析出Command结构体
+char** char_to_cmd(char* input) {
+    size_t capacity = 10;
+    size_t count = 0;
+    char** buffer = malloc(capacity * sizeof(char)*capacity);
+
+    if (buffer == NULL) {
+        perror("malloc failed");
+        exit(EXIT_FAILURE);
+    }
+
+    char *token = strtok(input, " ");
+    while (token != NULL) {
+        if (count >= capacity) {
+            capacity *= 2;
+            buffer = realloc(buffer, capacity * sizeof(char*));
+            if (buffer == NULL) {
+                perror("realloc failed");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        buffer[count++] = strdup(token);
+        token = strtok(NULL, " ");
+    }
+
+    buffer[count] = NULL;
+    return buffer;
+}
+
+char** copy_args(char** src) {
+    if (src == NULL) {
+        return NULL;
+    }
+
+    size_t count = 0;
+    while (src[count] != NULL) {
+        count++;
+    }
+
+    char** dest = malloc((count + 1) * sizeof(char*));
+    if (dest == NULL) {
+        perror("malloc failed");
+        exit(EXIT_FAILURE);
+    }
+
+    for (size_t i = 0; i < count; i++) {
+        dest[i] = strdup(src[i]);
+        if (dest[i] == NULL) {
+            perror("strdup failed");
+            for (size_t j = 0; j < i; j++) {
+                free(dest[j]);
+            }
+            free(dest);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    dest[count] = NULL;
+    return dest;
+}
+
 Command *parse_cmd(char *cmd_buffer) 
 {
     Command *head = NULL;
     Command *current = NULL;
-    char *token = strtok(cmd_buffer, "|");
+    size_t start = 0;
+    size_t char_poiter = 0;
 
-    while (token != NULL) 
-    {
+    while (char_poiter < strlen(cmd_buffer)) {
+        if (strchr(delimiters, cmd_buffer[char_poiter])) {
+            Command *cmd = malloc(sizeof(Command));
+            if (cmd == NULL) {
+                perror("malloc failed");
+                exit(EXIT_FAILURE);
+            }
+
+            size_t length = char_poiter - start;
+            char *tmp = malloc(length + 1);
+            if (tmp == NULL) {
+                perror("malloc failed");
+                exit(EXIT_FAILURE);
+            }
+            memcpy(tmp, &cmd_buffer[start], length);
+            tmp[length] = '\0';
+
+            char **cmd_args = char_to_cmd(tmp);
+            cmd->program = strdup(cmd_args[0]);
+            cmd->args = copy_args(cmd_args);
+            free(tmp);
+
+            switch (cmd_buffer[char_poiter]) {
+                case '|':
+                    cmd->operate = PIPE;
+                    break;
+                case '>':
+                    cmd->operate = O_REDIRECT;
+                    break;
+                case '<':
+                    cmd->operate = I_REDIRECT;
+                    break;
+                default:
+                    cmd->operate = NONE;
+                    break;
+            }
+
+            cmd->next = NULL;
+
+            if (head == NULL) {
+                head = cmd;
+            } else {
+                current->next = cmd;
+            }
+            current = cmd;
+
+            start = char_poiter + 1;
+        }
+        char_poiter += 1;
+    }
+
+    if (start < char_poiter) {
+        size_t length = char_poiter - start;
+        char *tmp = malloc(length + 1);
+        if (tmp == NULL) {
+            perror("malloc failed");
+            exit(EXIT_FAILURE);
+        }
+        memcpy(tmp, &cmd_buffer[start], length);
+        tmp[length] = '\0';
+
+        char **cmd_args = char_to_cmd(tmp);
+
         Command *cmd = malloc(sizeof(Command));
+        if (cmd == NULL) {
+            perror("malloc failed");
+            exit(EXIT_FAILURE);
+        }
+        cmd->program = strdup(cmd_args[0]);
+        cmd->args = copy_args(cmd_args);
+        free(tmp);
+        cmd->operate = NONE;
         cmd->next = NULL;
 
-        char *prog_token = strtok(token, " ");
-        cmd->program = strdup(prog_token);
-
-        int arg_count = 0;
-        char *arg_list[100];
-        while (prog_token != NULL) {
-            arg_list[arg_count++] = strdup(prog_token);
-            prog_token = strtok(NULL, " ");
-        }
-        arg_list[arg_count] = NULL;
-        cmd->args = malloc(sizeof(char *) * (arg_count + 1));
-        memcpy(cmd->args, arg_list, sizeof(char *) * (arg_count + 1));
-
-        if (head == NULL) 
-        {
+        if (head == NULL) {
             head = cmd;
-        }
-        else
-        {
+        } else {
             current->next = cmd;
         }
-        current = cmd;
-
-        token = strtok(NULL, "|");
     }
 
     return head;
 }
 
-char* slice_array(const char* array, int start, int length) {
-    char* sub_array = malloc((length + 1) * sizeof(char));
-    if (sub_array == NULL) {
-        perror("Memory allocation failed");
-        exit(1);
-    }
-
-    strncpy(sub_array, array + start, length);
-    sub_array[length] = '\0';
-
-    return sub_array;
-}
-
-//将输入的命令字符串 cmd_buffer 按照特定的分隔符解析为一个结构数组
-seperate_char** parse_char(char *cmd_buffer) 
+void free_command_list(Command *head) 
 {
-    seperate_char** sep_char = NULL;
+    while (head != NULL) {
+        Command *temp = head;
+        head = head->next;
 
-    char cmd_unparsed[1024];
-    char tmp[1024];
-    int pro_count = 0;
-    int buffer_pointer = 0;
-    memcpy(cmd_unparsed, cmd_buffer, 1024);
+        free(temp->program);
 
-    while(buffer_pointer < 1024)
-    {
-        if (cmd_unparsed[buffer_pointer] == '|') 
-        {
-            //不要复制空格到新数组
-            memcpy(tmp, cmd_unparsed, buffer_pointer-2);
-
-            sep_char[pro_count]->cmd = strdup(tmp);
-            sep_char[pro_count]->operate = PIPE;
-
-            //去除空格
-            int remaining_length = strlen(cmd_unparsed) - buffer_pointer - 1;
-            char* new_unparsed = slice_array(cmd_unparsed, buffer_pointer + 2, remaining_length-1);
-            strcpy(cmd_unparsed, new_unparsed);
-            free(new_unparsed);
-
-            buffer_pointer = 0;
-            pro_count++;
+        if (temp->args != NULL) {
+            for (size_t i = 0; temp->args[i] != NULL; i++) {
+                free(temp->args[i]);
+            }
+            free(temp->args);
         }
-        else if (cmd_unparsed[buffer_pointer] == '>') 
-        {
-            memcpy(tmp, cmd_unparsed, buffer_pointer-2);
 
-            sep_char[pro_count]->cmd = strdup(tmp);
-            sep_char[pro_count]->operate = REDIRECT;
-
-            int remaining_length = strlen(cmd_unparsed) - buffer_pointer - 1;
-            char* new_unparsed = slice_array(cmd_unparsed, buffer_pointer + 2, remaining_length-1);
-            strcpy(cmd_unparsed, new_unparsed);
-            free(new_unparsed);
-
-            buffer_pointer = 0;
-            pro_count++;
-        }
-        buffer_pointer++;
+        free(temp);
     }
-
-    return sep_char;
 }
 
-void free_buffer(char *cmd_buffer, Command *current_cmd) 
+void free_buffer(char *cmd_buffer, Command *head) 
 {
     free(cmd_buffer);
-    free(current_cmd);
+    free_command_list(head);
 }
