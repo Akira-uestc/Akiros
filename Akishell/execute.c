@@ -18,27 +18,7 @@ void execute_cmd(Command* cmd_list) {
     int saved_stdout = dup(STDOUT_FILENO);
 
     while (cmd_list != NULL) {
-        if (cmd_list->operate == O_REDIRECT) {
-            int fd = open(cmd_list->program, O_WRONLY|O_CREAT|O_TRUNC, 0644);
-            if (fd == -1) {
-                perror("open");
-                exit(EXIT_FAILURE);
-            }
-            dup2(fd, STDOUT_FILENO);
-            close(fd);
-        }
-
-        if (cmd_list->operate == I_REDIRECT) {
-            int fd = open(cmd_list->program, O_RDONLY);
-            if (fd == -1) {
-                perror("open");
-                exit(EXIT_FAILURE);
-            }
-            dup2(fd, STDIN_FILENO);
-            close(fd);
-        }
-
-        if (cmd_list->operate == PIPE || cmd_list->next != NULL) {
+        if (cmd_list->next != NULL) {
             if (pipe(pipe_fds) == -1) {
                 perror("pipe");
                 exit(EXIT_FAILURE);
@@ -52,13 +32,31 @@ void execute_cmd(Command* cmd_list) {
         }
 
         if (pid == 0) {
-            if (cmd_list->operate != O_REDIRECT) {
-                dup2(saved_stdout, STDOUT_FILENO);
-            }
+            dup2(saved_stdout, STDOUT_FILENO);
+            close(saved_stdout);
 
             if (in_fd != STDIN_FILENO) {
                 dup2(in_fd, STDIN_FILENO);
                 close(in_fd);
+            }
+
+            if (cmd_list->operate == O_REDIRECT) {
+                int fd = open(cmd_list->next->program, O_WRONLY|O_TRUNC|O_CLOEXEC,0644);
+                if (fd == -1) {
+                    perror("open");
+                    exit(EXIT_FAILURE);
+                }   
+            }
+
+            if (cmd_list->operate == I_REDIRECT) {
+                int fd = open(cmd_list->next->program, O_RDONLY|O_CLOEXEC);
+                printf("Tring to open %s",cmd_list->next->program);
+                if (fd == -1) {
+                    perror("open");
+                    exit(EXIT_FAILURE);
+                }
+                dup2(fd, STDIN_FILENO);
+                close(fd);
             }
 
             if (cmd_list->next != NULL) {
@@ -70,8 +68,7 @@ void execute_cmd(Command* cmd_list) {
             execvp(cmd_list->program, cmd_list->args);
             perror("execvp");
             exit(EXIT_FAILURE);
-        } 
-        else {
+        } else {
             if (in_fd != STDIN_FILENO) {
                 close(in_fd);
             }
@@ -81,17 +78,12 @@ void execute_cmd(Command* cmd_list) {
                 in_fd = pipe_fds[0];
             }
 
-            if (cmd_list->operate == O_REDIRECT) {
-                dup2(saved_stdout, STDOUT_FILENO);
-            }
-            if (cmd_list->operate == I_REDIRECT) {
-                dup2(STDIN_FILENO, in_fd);
-            }
-
             cmd_list = cmd_list->next;
         }
     }
 
     while (waitpid(-1, NULL, 0) > 0);
+
+    dup2(saved_stdout, STDOUT_FILENO);
     close(saved_stdout);
 }

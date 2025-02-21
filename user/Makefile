@@ -6,11 +6,11 @@ APPS := $(wildcard $(APP_DIR)/*.rs)
 ELFS := $(patsubst $(APP_DIR)/%.rs, $(TARGET_DIR)/%, $(APPS))
 BINS := $(patsubst $(APP_DIR)/%.rs, $(TARGET_DIR)/%.bin, $(APPS))
 
-OBJDUMP := /home/akira/.cargo/bin/rust-objdump --arch-name=riscv64
-OBJCOPY := /home/akira/.cargo/bin/rust-objcopy --binary-architecture=riscv64
+OBJDUMP := rust-objdump --arch-name=riscv64
+OBJCOPY := rust-objcopy --binary-architecture=riscv64
 
-elf:
-	@cargo build --release
+elf: $(APPS)
+	@python3 build.py
 
 binary: elf
 	@$(foreach elf, $(ELFS), $(OBJCOPY) $(elf) --strip-all -O binary $(patsubst $(TARGET_DIR)/%, $(TARGET_DIR)/%.bin, $(elf));)
@@ -18,4 +18,6 @@ binary: elf
 build: binary
 
 clean:
-	cargo clean
+	@cargo clean
+
+.PHONY: elf binary build clean

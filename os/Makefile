@@ -5,22 +5,22 @@ KERNEL_ELF := target/$(TARGET)/$(MODE)/os
 KERNEL_BIN := $(KERNEL_ELF).bin
 DISASM_TMP := target/$(TARGET)/$(MODE)/asm
 
-# Building mode argument
-ifeq ($(MODE), release)
-	MODE_ARG := --release
-endif
-
 # BOARD
 BOARD := qemu
 SBI ?= rustsbi
 BOOTLOADER := ./bootloader/$(SBI)-$(BOARD).bin
 
+# Building mode argument
+ifeq ($(MODE), release)
+	MODE_ARG := --release
+endif
+
 # KERNEL ENTRY
 KERNEL_ENTRY_PA := 0x80200000
 
 # Binutils
-OBJDUMP := ~/.cargo/bin/rust-objdump --arch-name=riscv64
-OBJCOPY := ~/.cargo/bin/rust-objcopy --binary-architecture=riscv64
+OBJDUMP := rust-objdump --arch-name=riscv64
+OBJCOPY := rust-objcopy --binary-architecture=riscv64
 
 # Disassembly
 DISASM ?= -x
@@ -43,7 +43,6 @@ kernel:
 	@cargo build $(MODE_ARG)
 	@rm src/linker.ld
 
-
 clean:
 	@cargo clean
 
@@ -63,8 +62,10 @@ QEMU_ARGS := -machine virt \
 			 -device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA)
 
 QEMU_NAME := qemu-system-riscv64
+qemu-version-check:
+	@sh scripts/qemu-ver-check.sh $(QEMU_NAME)
 
-run-inner: build
+run-inner: qemu-version-check build
 	@qemu-system-riscv64 $(QEMU_ARGS)
 
 debug: qemu-version-check build
@@ -80,4 +81,3 @@ gdbclient:
 	@riscv64-unknown-elf-gdb -ex 'file $(KERNEL_ELF)' -ex 'set arch riscv:rv64' -ex 'target remote localhost:1234'
 
 .PHONY: build env kernel clean disasm disasm-vim run-inner gdbserver gdbclient qemu-version-check
-

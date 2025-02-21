@@ -20,8 +20,6 @@ typedef struct Command {
     char* program;
     char** args;
     Operate operate;
-    FILE* input_direction;
-    FILE* output_direction;
     struct Command *next;
 } Command;
 
